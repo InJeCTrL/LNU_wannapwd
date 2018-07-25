@@ -1,1 +1,14 @@
-﻿
+﻿  t.c
+d:\code trunk\clittle-master\lnu_wannapwd\lnu_wannapwd\t.c(15): warning C4996: '_itoa': This function or variable may be unsafe. Consider using _itoa_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+          d:\visual studio 2012\vc\include\stdlib.h(468) : 参见“_itoa”的声明
+d:\code trunk\clittle-master\lnu_wannapwd\lnu_wannapwd\t.c(69): warning C4244: “=”: 从“double”转换到“int”，可能丢失数据
+d:\code trunk\clittle-master\lnu_wannapwd\lnu_wannapwd\t.c(74): warning C4244: “=”: 从“double”转换到“int”，可能丢失数据
+d:\code trunk\clittle-master\lnu_wannapwd\lnu_wannapwd\t.c(76): warning C4244: “=”: 从“double”转换到“int”，可能丢失数据
+d:\code trunk\clittle-master\lnu_wannapwd\lnu_wannapwd\t.c(79): warning C4244: “=”: 从“double”转换到“int”，可能丢失数据
+d:\code trunk\clittle-master\lnu_wannapwd\lnu_wannapwd\t.c(80): warning C4244: “=”: 从“double”转换到“int”，可能丢失数据
+d:\code trunk\clittle-master\lnu_wannapwd\lnu_wannapwd\t.c(91): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+          d:\visual studio 2012\vc\include\string.h(110) : 参见“strcpy”的声明
+d:\code trunk\clittle-master\lnu_wannapwd\lnu_wannapwd\t.c(147): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+          d:\visual studio 2012\vc\include\stdio.h(357) : 参见“sprintf”的声明
+d:\code trunk\clittle-master\lnu_wannapwd\lnu_wannapwd\t.c(136): warning C4700: 使用了未初始化的局部变量“sockinf”
+  LNU_wannapwd.vcxproj -> D:\Code Trunk\Clittle-master\LNU_wannapwd\Debug\LNU_wannapwd.exe

