@@ -88,7 +88,7 @@ int CheckBegin(char *stuid,char *pwd)
 	register int i,tnum;//tnum:剩余密码个数
 
 	/*套接字初始化部分*/
-	int timeout = 60000;//超时1分钟
+	int timeout = 20000;//超时20s
 	int TimedOutFlag = 0;
 	WSADATA WSAData={0}; 
 	SOCKET sockinf; 
@@ -111,7 +111,7 @@ int CheckBegin(char *stuid,char *pwd)
 	addr.sin_addr.s_addr = *((unsigned long*)pURL->h_addr); 
 	addr.sin_port = htons(80); 
 	sockinf = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP); 
-	setsockopt(sockinf,SOL_SOCKET,SO_SNDTIMEO,(char*)&timeout,sizeof(int));//设置recv超时为1分钟
+	setsockopt(sockinf,SOL_SOCKET,SO_RCVTIMEO,(char*)&timeout,sizeof(int));//设置recv超时为20s
 	connect(sockinf,(SOCKADDR *)&addr,sizeof(addr)); 
 
 
@@ -129,11 +129,13 @@ int CheckBegin(char *stuid,char *pwd)
 				TimedOutFlag++;
 				if (TimedOutFlag == 3)//超时达到3次
 				{
-					if (IDNO == MessageBox(NULL,"请求超时次数达到3次，是否等待或是直接退出程序","Something wrong!",MB_YESNO))
+					if (IDNO == MessageBox(NULL,"请求超时次数达到3次\n是:继续等待，否:退出程序","Something wrong!",MB_YESNO))
 					{
 						printf("\n\n用户选择了终止程序！\n");
 						goto CLR;//用户选择停止程序
 					}
+					sitebuf[0] = 0;
+					TimedOutFlag = 0;//用户选择继续等待，之后socket重连
 				}
 			}
 			else
@@ -150,7 +152,7 @@ int CheckBegin(char *stuid,char *pwd)
 		{
 			closesocket(sockinf);
 			sockinf = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP); 
-			setsockopt(sockinf,SOL_SOCKET,SO_SNDTIMEO,(char*)&timeout,sizeof(int));//设置recv超时为1分钟
+			setsockopt(sockinf,SOL_SOCKET,SO_RCVTIMEO,(char*)&timeout,sizeof(int));//设置recv超时为60s
 			connect(sockinf,(SOCKADDR *)&addr,sizeof(addr)); 
 			i--;
 		}
