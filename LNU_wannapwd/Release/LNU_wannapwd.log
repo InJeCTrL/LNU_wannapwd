@@ -7,7 +7,7 @@ t.c(55): warning C4244: “=”: 从“double”转换到“int”，可能丢�
 t.c(58): warning C4244: “=”: 从“double”转换到“int”，可能丢失数据
 t.c(59): warning C4244: “=”: 从“double”转换到“int”，可能丢失数据
 t.c(70): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-t.c(125): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+t.c(126): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
           D:\Visual Studio 2012\VC\include\stdio.h(357) : 参见“sprintf”的声明
   正在生成代码
   已完成代码的生成

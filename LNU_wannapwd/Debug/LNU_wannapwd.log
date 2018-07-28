@@ -8,6 +8,6 @@ d:\code trunk\clittle-master\lnu_wannapwd\lnu_wannapwd\t.c(58): warning C4244: �
 d:\code trunk\clittle-master\lnu_wannapwd\lnu_wannapwd\t.c(59): warning C4244: “=”: 从“double”转换到“int”，可能丢失数据
 d:\code trunk\clittle-master\lnu_wannapwd\lnu_wannapwd\t.c(70): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
           d:\visual studio 2012\vc\include\string.h(110) : 参见“strcpy”的声明
-d:\code trunk\clittle-master\lnu_wannapwd\lnu_wannapwd\t.c(125): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+d:\code trunk\clittle-master\lnu_wannapwd\lnu_wannapwd\t.c(126): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
           d:\visual studio 2012\vc\include\stdio.h(357) : 参见“sprintf”的声明
   LNU_wannapwd.vcxproj -> D:\Code Trunk\Clittle-master\LNU_wannapwd\Debug\LNU_wannapwd.exe

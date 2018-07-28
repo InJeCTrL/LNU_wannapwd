@@ -81,11 +81,12 @@ int CreatePwdList(char *pwd,char ***pwdList)
 	}
 	return tnum;
 }
-int CheckBegin(char *stuid,char *pwd)
-{/*输入参数：	pwd(密码格式串)*/
+long CheckBegin(char *stuid,char *pwd)
+{/*输入参数：	pwd(密码格式串)，返回运行时间(ms)*/
 	char **PwdList = NULL;//指向密码表
 	int PwdNum;//密码个数
 	register int i,tnum;//tnum:剩余密码个数
+	long t;//计算运行时间
 
 	/*套接字初始化部分*/
 	int timeout = 20000;//超时20s
@@ -96,7 +97,7 @@ int CheckBegin(char *stuid,char *pwd)
 	struct hostent *pURL; 
 	char header[1024] = {0};//请求头
 	char sitebuf[2049] = {0};//存放页面内容
-	if (WSAStartup(MAKEWORD(2,2), &WSAData))
+	if (WSAStartup(MAKEWORD(2,2),&WSAData))
 	{
 		printf("\n\n套接字启动失败！\n");
 		return 0;
@@ -114,7 +115,7 @@ int CheckBegin(char *stuid,char *pwd)
 	setsockopt(sockinf,SOL_SOCKET,SO_RCVTIMEO,(char*)&timeout,sizeof(int));//设置recv超时为20s
 	connect(sockinf,(SOCKADDR *)&addr,sizeof(addr)); 
 
-
+	t = GetTickCount();//从生成密码表开始计时
 	tnum = PwdNum = CreatePwdList(pwd,&PwdList);//生成密码表并返回个数
 	printf("\n共%d个待测试密码",PwdNum);
 	for (i=0;i<PwdNum;i++)
@@ -169,6 +170,13 @@ CLR:
 		free(PwdList[i]);//释放内存
 	closesocket(sockinf);//关闭socket
 	WSACleanup();//清除套接字
+	t = GetTickCount() - t;//计算运行总时间
+	return t;
+}
+int IsRightStr(char *src,char *chk)
+{/*检查源字符串是否只包含chk字符串中的字符*/
+	if (strspn(src,chk) == strlen(src))
+		return 1;
 	return 0;
 }
 
@@ -176,12 +184,25 @@ int main()
 {
 	char stuid[10] = {0};//学号
 	char pwd[7] = {0};//密码
-	printf("辽宁大学综合教务管理系统登录密码找回\n--请保证未改过原始密码(身份证后六位)，否则无效\n--六位密码输入样例：1234??表示查找123400~123499\n--开始找回密码后标题栏将自动更新剩余尝试数\n\n");
-	printf("输入九位学号：");
-	gets_s(stuid,10);
-	printf("输入六位密码：");
-	gets_s(pwd,7);
-	CheckBegin(stuid,pwd);//开始检查
+	long RunTime;//运行时间
+	int h,m;//时分
+	printf("辽宁大学综合教务管理系统登录密码找回\n--请保证未改过原始密码(身份证后六位)，否则无效\n--六位密码输入样例：1234??表示查找123400~123499\n--输入超过限定长度将被截断\n--开始找回密码后标题栏将自动更新剩余尝试数\n\n");
+	do
+	{
+		printf("输入九位数字学号：");
+		scanf_s("%s",stuid,10);
+	}while(!IsRightStr(stuid,"1234567890"));//学号输入不符合规范
+	do
+	{
+		printf("输入六位密码(数字/?)：");
+		scanf_s("%s",pwd,7);
+	}while(!IsRightStr(pwd,"1234567890?"));//密码输入不符合规范
+	RunTime = CheckBegin(stuid,pwd);//开始检查
+	h = RunTime/3600000;//计算小时数
+	RunTime %= 3600000;
+	m = RunTime/60000;//计算分钟数
+	RunTime %= 60000;
+	printf("\n运行了：%d时%d分%d秒\n",h,m,RunTime/1000);
 
 	system("pause");
 	
